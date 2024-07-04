@@ -28,8 +28,16 @@ def db_delete_policy(db: Session, policy_id: int):
     db.commit()
 
 
-def db_update_policy(db: Session, policy_update: PolicyUpdate):
-    pass
+def db_update_policy(
+    db: Session, policy_id: int, policy_update: PolicyUpdate
+) -> PolicyModel:
+    policy = db.query(PolicyModel).get(policy_id)
+    for key, value in policy_update.dict(exclude_unset=True).items():
+        setattr(policy, key, value)
+    db.add(policy)
+    db.commit()
+    db.refresh(policy)
+    return policy
 
 
 def db_add_comment(db: Session, comment: Comment):
@@ -39,5 +47,4 @@ def db_add_comment(db: Session, comment: Comment):
 
 
 def db_get_comments(db: Session, policy_id: int):
-    print(db.query(CommentModel).filter(CommentModel.policy_id == policy_id).all())
     return db.query(CommentModel).filter(CommentModel.policy_id == policy_id).all()

@@ -20,6 +20,11 @@ class PolicyModel(Base):
     remarks = Column(Text, nullable=True)
     created_at = Column(DateTime, default=func.now())
 
+    def as_dict(self):
+        return {
+            column.name: getattr(self, column.name) for column in self.__table__.columns
+        }
+
 
 class CommentModel(Base):
     __tablename__ = "comments"

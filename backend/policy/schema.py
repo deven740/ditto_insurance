@@ -79,16 +79,36 @@ class FilterParams(BaseModel):
 
 
 class PolicyUpdate(BaseModel):
-    customer_name: str = None
-    email: str = None
-    phone_number: str = None
-    date_of_birth: date = None
-    policy_cover: int = None
-    policy_status: str = None
-    policy_number: str = None
-    medical_type: str = None
-    medical_status: str = None
-    remarks: str = None
+    customer_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    policy_cover: Optional[int] = None
+    policy_status: Optional[str] = None
+    policy_number: Optional[str] = None
+    medical_type: Optional[str] = None
+    medical_status: Optional[str] = None
+    remarks: Optional[str] = None
+
+    @validator("date_of_birth", pre=False, always=True)
+    def check_if_valid_age(cls, date_of_birth):
+        if date_of_birth is not None:
+            return age_validator(date_of_birth)
+        return date_of_birth
+
+    @root_validator(pre=True)
+    def check_if_valid_policy_number(cls, values):
+        policy_status = values.get("policy_status")
+        policy_number = values.get("policy_number")
+        policy_number_validator(policy_status, policy_number)
+        return values
+
+    @validator("phone_number", pre=True, always=True)
+    def check_if_valid_number(cls, number):
+        if number is not None:
+            phone_number_validator(number)
+            return number
+        return number
 
 
 class Comment(BaseModel):

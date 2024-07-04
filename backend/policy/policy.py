@@ -1,6 +1,14 @@
-from fastapi import APIRouter, Body, Depends, status
+from fastapi import APIRouter, Body, Depends, status, BackgroundTasks
 from fastapi.responses import JSONResponse, Response
-from .schema import HdfcLife, IciciLife, MaxLife, PolicyOut, FilterParams, Comment
+from .schema import (
+    HdfcLife,
+    IciciLife,
+    MaxLife,
+    PolicyOut,
+    FilterParams,
+    Comment,
+    PolicyUpdate,
+)
 from typing import Union
 from .crud import (
     db_add_policy,
@@ -13,6 +21,7 @@ from .crud import (
 from database import get_db
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
+from email_utils import send_email
 
 router = APIRouter(
     prefix="/policy",
@@ -22,12 +31,16 @@ router = APIRouter(
 
 @router.post("/add-policy")
 def add_policy(
+    bg: BackgroundTasks,
     db=Depends(get_db),
     policy: Union[HdfcLife, IciciLife, MaxLife] = Body(
         ..., discriminator="policy_type"
     ),
 ) -> JSONResponse:
     db_add_policy(db, policy)
+    if policy.policy_status == "Policy Issued":
+        send_email(policy.dict(), bg)
+
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
         content={"detail": "Policy added"},
@@ -38,17 +51,20 @@ def add_policy(
 def get_policy(
     db=Depends(get_db), filters: FilterParams = Depends()
 ) -> Page[PolicyOut]:
-    print(filters)
     data = db_get_policy(db, filters)
     return paginate(data)
 
 
 @router.patch("/update-policy/{policy_id}")
-def update_policy(policy_id: int, db=Depends(get_db)):
-    db_update_policy(db, policy_id)
+def update_policy(
+    bg: BackgroundTasks, policy_id: int, policy_update: PolicyUpdate, db=Depends(get_db)
+):
+    policy = db_update_policy(db, policy_id, policy_update)
+    if policy_update.policy_status == "Policy Issued":
+        send_email(policy.as_dict(), bg)
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
-        content={"detail": "Policy added"},
+        content={"detail": "Policy Updated"},
     )
 
 

@@ -10,24 +10,21 @@ services:
       - ./mnt/:/mnt
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     ports:
-      - 8001:8000
+      - 8000:8000
     env_file:
       - .env.dev
     restart: always
 
-  # db:
-  #   container_name: db
-  #   image: postgres:14
-  #   environment:
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=admin
-  #   volumes:
-  #     - db:/var/lib/postgresql/data/
-  #   ports:
-  #     - 5432:5432
-  #   restart: always
-
-  
+  db:
+    container_name: db
+    image: postgres:14
+    env_file:
+      - .env.dev
+    volumes:
+      - db:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432
+    restart: always
 volumes:
   db:
     external: false
