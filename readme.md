@@ -23,3 +23,5 @@ Swagger UI - http://localhost:8000/docs
    EMAIL_PASSWORD
    POSTGRES_USER
    POSTGRES_PASSWORD
+
+I have also attached screenshots of email and routes on swagger UI
